@@ -8,6 +8,7 @@ call=6
 print_ari=7
 variable=8
 
+
 def lexical(inputs):
     checkdic={'T0': {"a": "T1", "b": "T1", "c": "T1", "d": "T1", "e": "T1", "f": "T1", "g": "T1", "h": "T1", "i": "T1",
             "j": "T1", "k": "T1","l": "T1", "m": "T1", "n": "T1", "o": "T1", "p": "T1", "q": "T1", "r": "T1", "s": "T1", "t": "T1",
@@ -75,25 +76,35 @@ def lexical(inputs):
             print("error")
 
 indexnum=0
+f_stack={}
+value_list=[]
 
 def start():
     global indexnum
     functions()
+    print('syntax ok')
 
 def functions():
     global indexnum
     function()
-    if(next_token[indexnum]==1):
+    if(indexnum<len(next_token) and next_token[indexnum]==1):
         functions()
 
 
 
 def function():
-    global indexnum
+    global indexnum,value_list
     identifier()
+    funcname=token_string[indexnum-1]
     if(next_token[indexnum]==2):
         indexnum+=1
+
+        if(funcname=='main'):
+            value_list=[]
+        else:
+            value_list=[0]
         function_body()
+        f_stack[funcname]=value_list
     else:
         print("function1 syntax error")
 
@@ -102,6 +113,8 @@ def function():
         pass
     else:
         print("function2 syntax error")
+        print(next_token[indexnum])
+        print(token_string[indexnum])
 
 
 def function_body():
@@ -129,12 +142,15 @@ def var_definition():
         indexnum+=1
     else:
         print("var definition2 syntax error")
+        print(next_token[indexnum])
+        print(token_string[indexnum])
 
 
 def var_list():
-    global indexnum
+    global indexnum,var_list
     identifier()
-    if(next_token==4):
+    value_list.append(token_string[indexnum-1])
+    if(next_token[indexnum]==4):
         indexnum+=1
         var_list()
 
@@ -152,20 +168,16 @@ def statement():
         indexnum+=1
         identifier()
         if (next_token[indexnum]==5):
-            pass
+            indexnum+=1
         else:
             print("statement1 error")
-
     elif(next_token[indexnum]==7):
         indexnum+=1
-        if(next_token[indexnum]==8):
+        if(next_token[indexnum]==5):
             indexnum+=1
-            pass
         else:
             print("statment2 syntax error")
-
-
-    elif(next_token[indexnum]==6):
+    elif(next_token[indexnum]==1):
         identifier()
         if(next_token[indexnum]==5):
             indexnum+=1
@@ -184,10 +196,35 @@ def identifier():
         print("identi syntax error")
     indexnum+=1
 
+def function_order():
+    funcname="main"
+    call_index=0
+    return_num=0
+    call_order.append('main')
+    while(True):
+        try:
+            return_addr=[]
+            call_index=token_string.index(funcname)#func(caller)의 이름 위치
+            callerindex=call_index#caller의 index 저장
+            right_paren_index=token_string.index('}',call_index)#func(caller)의 '}' 위치
+            call_index=token_string.index('call',call_index,right_paren_index)#callee의 index
+            return_num=token_string[callerindex:call_index].count(';')
+            if('variable' in token_string[callerindex:call_index]):
+                return_num-=1
+            return_addr.append(funcname)
+            return_addr.append(return_num+1)
+            #func(caller)의 이름 위치와 '}'의 위치 사이에서 call 하는 거 위치 찾기 그럼 그거 +1한게 함수 이름 위치
+            funcname=token_string[call_index+1]#caller에서 call한 함수의 이름
+            call_order.append(funcname) #caller
+            f_stack[funcname].insert(0,return_addr)
+        except:
+            break
 
 
 
 
+return_addr=[]
+call_order=[]
 next_token = []
 token_string = []
 input_string=""
@@ -203,9 +240,10 @@ def main():
     lexical(input_string)
     print(next_token)
     print(token_string)
-
     start()
-
+    function_order()
+    print(call_order)
+    print(f_stack)
 
 if __name__=="__main__":
     main()
