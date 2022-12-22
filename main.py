@@ -1,3 +1,4 @@
+import sys
 
 idetifier=1
 left_paren=2
@@ -41,7 +42,7 @@ def lexical(inputs):
                 symbol = checkdic[symbol][inputs[i]]
                 i += 1
 
-            if(lexem=='call' or lexem=="print_ari" or lexem=="variable"):
+            if(lexem=='call' or lexem=="print_ari" or lexem=="variable"): #예약어 찾기
                 if(lexem=="call"):
                     token_string.append("call")
                     next_token.append(6)
@@ -54,19 +55,19 @@ def lexical(inputs):
             else:
                 token_string.append(lexem)
                 next_token.append(1)
-        elif (symbol=='T2'):
+        elif (symbol=='T2'):  # { 찾기
             next_token.append(2)
             token_string.append(lexem)
             i += 1
-        elif (symbol=='T3'):
+        elif (symbol=='T3'): # } 찾기
             next_token.append(3)
             token_string.append(lexem)
             i += 1
-        elif (symbol=='T4'):
+        elif (symbol=='T4'): # , 찾기
             next_token.append(4)
             token_string.append(lexem)
             i += 1
-        elif (symbol=='T5'):
+        elif (symbol=='T5'): # ; 찾기
             next_token.append(5)
             token_string.append(lexem)
             i += 1
@@ -82,7 +83,7 @@ value_list=[]
 def start():
     global indexnum
     functions()
-    print('syntax ok')
+    print('Syntax O.K.')
 
 def functions():
     global indexnum
@@ -108,12 +109,14 @@ def function():
         f_stack[funcname]=value_list
     else:
         print("function1 syntax error")
+        exit()
 
     if(next_token[indexnum]==3):
         indexnum+=1
         pass
     else:
         print("function2 syntax error")
+        exit()
         print(next_token[indexnum])
         print(token_string[indexnum])
 
@@ -138,13 +141,14 @@ def var_definition():
         var_list()
     else:
         print("var definition1 syntax error")
+        exit()
 
     if(next_token[indexnum]==5):
         indexnum+=1
     else:
         print("var definition2 syntax error")
-        print(next_token[indexnum])
-        print(token_string[indexnum])
+        exit()
+
 
 
 def var_list():
@@ -172,12 +176,14 @@ def statement():
             indexnum+=1
         else:
             print("statement1 error")
+            exit()
     elif(next_token[indexnum]==7):
         indexnum+=1
         if(next_token[indexnum]==5):
             indexnum+=1
         else:
             print("statment2 syntax error")
+            exit()
     elif(next_token[indexnum]==1):
         identifier()
         if(next_token[indexnum]==5):
@@ -185,9 +191,11 @@ def statement():
             pass
         else:
             print("statement 3syntax error")
+            exit()
 
     else:
         print("statmentsyntax4 error")
+        exit()
 
 def identifier():
     global indexnum
@@ -195,6 +203,7 @@ def identifier():
         pass
     else:
         print("identi syntax error")
+        exit()
     indexnum+=1
 
 def function_order():
@@ -245,8 +254,7 @@ def execute():
                         for j in range(call_order.index(func)+1):
                             try:
                                 where=f_stack[call_order[call_order.index(func)-j]].index(token_string[i+1])
-                                print(f_stack[call_order[call_order.index(func)-j]][0])
-                                print("%s:%s => %d,%d"%(func,token_string[i+1],count,where))
+                                print("\n%s:%s => %d,%d"%(func,token_string[i+1],count,where))
                                 count=0
                                 where=0
                             except:
@@ -256,22 +264,33 @@ def execute():
                         i+=1
                 else:
                     i+=1
-            elif(next_token[i]==7):
-                if(next_token[i+1]==5):
+            elif (next_token[i] == 7):   # print_ari 만나고
+                if (next_token[i + 1] == 5): # ;만나면 print ari 실행
                     call_order_reverse = list(reversed(call_order))
                     for m in call_order_reverse:
-                        print("%s:"%m,end='')
+                        print("\n%s:" % m, end='')
                         for j in range(len(f_stack[m])):
-                            k=len(f_stack[m])-j-1
-                            if (f_stack[m][0][0]!='main'):
-                                if(k>1):
-                                    print("Local variable: %s"%f_stack[m][k])
-                                elif(k==1):
-                                    print("Dynamic Link: %d"%f_stack[m][k])
+                            k = len(f_stack[m]) - j - 1
+                            if (m!= 'main'):
+                                if (k ==len(f_stack[m])-1):
+                                    print("Local variable: %s" %f_stack[m][k])
+                                elif(k>1):
+                                    print(" "*(len(m)+1),end='')
+                                    print("Local variable: %s" % f_stack[m][k])
+                                elif (k == 1):
+                                    print(" " * (len(m)+1), end='')
+                                    print("Dynamic Link:",end='')
+                                    print(f_stack[m][k])
                                 elif(k==0):
+                                    print(" " * (len(m)+1), end='')
                                     print("Return Address: %s: %d"%(f_stack[m][0][0],f_stack[m][0][1]))
-                else:
+                            else:
+                                if(k!=len(f_stack[m])-1):
+                                    print(" " * (len(m)+1), end='')
+                                print("Local variable: %s" %f_stack[m][k])
                     i+=1
+                else:
+                    i += 1
             else:
                 i+=1
 
@@ -294,15 +313,10 @@ def main():
     for line in data:
         input_string=input_string+line.strip()+' '
     lexical(input_string)
-    print(next_token)
-    print(token_string)
     start()
-    print(f_stack)
+
     function_order()
-    print(f_index)
-    print(call_order)
-    #call_order_reverse = list(reversed(call_order))
-    #print(call_order_reverse)
+
     execute()
 
 
