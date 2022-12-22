@@ -96,6 +96,7 @@ def function():
     global indexnum,value_list
     identifier()
     funcname=token_string[indexnum-1]
+    f_index[funcname]=indexnum-1
     if(next_token[indexnum]==2):
         indexnum+=1
 
@@ -204,25 +205,80 @@ def function_order():
     while(True):
         try:
             return_addr=[]
-            call_index=token_string.index(funcname)#func(caller)의 이름 위치
-            callerindex=call_index#caller의 index 저장
-            right_paren_index=token_string.index('}',call_index)#func(caller)의 '}' 위치
-            call_index=token_string.index('call',call_index,right_paren_index)#callee의 index
-            return_num=token_string[callerindex:call_index].count(';')
-            if('variable' in token_string[callerindex:call_index]):
+            caller_index=f_index[funcname] #caller의 index 저장
+            right_paren_index=token_string.index('}',caller_index) #func(caller)의 '}' 위치
+            call_index=token_string.index('call',caller_index,right_paren_index) #callee의 index
+            return_num=token_string[caller_index:call_index].count(';')
+            if('variable' in token_string[caller_index:call_index]):
                 return_num-=1
             return_addr.append(funcname)
-            return_addr.append(return_num+1)
-            #func(caller)의 이름 위치와 '}'의 위치 사이에서 call 하는 거 위치 찾기 그럼 그거 +1한게 함수 이름 위치
-            funcname=token_string[call_index+1]#caller에서 call한 함수의 이름
-            call_order.append(funcname) #caller
+            return_addr.append(return_num+1) #func(caller)의 이름 위치와 '}'의 위치 사이에서 call 하는 거 위치 찾기 그럼 그거 +1한게 함수 이름 위치
+            funcname=token_string[call_index+1] #caller에서 call한 함수의 이름(callee 이름)
+            call_order.append(funcname) #callee 저장
             f_stack[funcname].insert(0,return_addr)
         except:
             break
+    for i in range(len(call_order)):
+        if(i==0):
+            pass
+        else:
+            if(f_stack[call_order[i]][0][0]=='main'):
+                f_stack[call_order[i]][1]=0
+            else:
+                sum=0
+                temp=i
+                while((temp-2)>=0):
+                    sum+=len(f_stack[call_order[temp- 2]])
+                    temp-=1
+                f_stack[call_order[i]][1] = sum
+
+def execute():
+    for k in range(len(call_order)):
+        i=f_index[call_order[len(call_order)-k-1]]#함수 선언한 위치
+        func=call_order[len(call_order)-1-k]
+        while(next_token[i]!=3):
+            if(next_token[i]==5 or next_token[i]==2):
+                if(next_token[i+1]==1):
+                    if(next_token[i+2]==5):
+                        count = 0
+                        where = 0
+                        for j in range(call_order.index(func)+1):
+                            try:
+                                where=f_stack[call_order[call_order.index(func)-j]].index(token_string[i+1])
+                                print(f_stack[call_order[call_order.index(func)-j]][0])
+                                print("%s:%s => %d,%d"%(func,token_string[i+1],count,where))
+                                count=0
+                                where=0
+                            except:
+                                count+=1
+                        i+=3
+                    else:
+                        i+=1
+                else:
+                    i+=1
+            elif(next_token[i]==7):
+                if(next_token[i+1]==5):
+                    call_order_reverse = list(reversed(call_order))
+                    for m in call_order_reverse:
+                        print("%s:"%m,end='')
+                        for j in range(len(f_stack[m])):
+                            k=len(f_stack[m])-j-1
+                            if (f_stack[m][0][0]!='main'):
+                                if(k>1):
+                                    print("Local variable: %s"%f_stack[m][k])
+                                elif(k==1):
+                                    print("Dynamic Link: %d"%f_stack[m][k])
+                                elif(k==0):
+                                    print("Return Address: %s: %d"%(f_stack[m][0][0],f_stack[m][0][1]))
+                else:
+                    i+=1
+            else:
+                i+=1
 
 
 
 
+f_index={}
 return_addr=[]
 call_order=[]
 next_token = []
@@ -241,9 +297,16 @@ def main():
     print(next_token)
     print(token_string)
     start()
-    function_order()
-    print(call_order)
     print(f_stack)
+    function_order()
+    print(f_index)
+    print(call_order)
+    #call_order_reverse = list(reversed(call_order))
+    #print(call_order_reverse)
+    execute()
+
+
+
 
 if __name__=="__main__":
     main()
