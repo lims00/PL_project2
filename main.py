@@ -304,9 +304,9 @@ call_order=[] #함수를 실행하는 순서
 
 def main():
     global input_string
-    #inputfile = sys.argv[1]
-    #f = open(inputfile,'r')
-    f = open('hello.txt', 'r')
+    inputfile = sys.argv[1]
+    f = open(inputfile,'r')
+    #f = open('hello.txt', 'r')
     data = f.readlines()
     f.close()
     for line in data:
