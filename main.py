@@ -9,7 +9,6 @@ call=6
 print_ari=7
 variable=8
 
-
 def lexical(inputs):
     checkdic={'T0': {"a": "T1", "b": "T1", "c": "T1", "d": "T1", "e": "T1", "f": "T1", "g": "T1", "h": "T1", "i": "T1",
             "j": "T1", "k": "T1","l": "T1", "m": "T1", "n": "T1", "o": "T1", "p": "T1", "q": "T1", "r": "T1", "s": "T1", "t": "T1",
@@ -74,7 +73,7 @@ def lexical(inputs):
         elif(symbol=="end"):
             i += 1
         elif (symbol=="T0"):
-            print("error")
+            print("Syntax Error")
 
 
 def start():
@@ -105,14 +104,14 @@ def function():
         function_body()
         f_stack[funcname]=value_list #함수 이름 key로 하고 value로 ARI저장
     else:
-        print("function1 syntax error")
+        print("Syntax Error")
         exit()
 
     if(next_token[indexnum]==3):
         indexnum+=1
         pass
     else:
-        print("function2 syntax error")
+        print("Syntax Error")
         exit()
 
 
@@ -136,13 +135,13 @@ def var_definition():
         indexnum+=1
         var_list()
     else:
-        print("var definition1 syntax error")
+        print("Syntax Error")
         exit()
 
     if(next_token[indexnum]==5):
         indexnum+=1
     else:
-        print("var definition2 syntax error")
+        print("Syntax Error")
         exit()
 
 
@@ -171,14 +170,14 @@ def statement():
         if (next_token[indexnum]==5):
             indexnum+=1
         else:
-            print("statement1 error")
+            print("Syntax Error")
             exit()
     elif(next_token[indexnum]==7):
         indexnum+=1
         if(next_token[indexnum]==5):
             indexnum+=1
         else:
-            print("statment2 syntax error")
+            print("Syntax Error")
             exit()
     elif(next_token[indexnum]==1):
         identifier()
@@ -186,11 +185,11 @@ def statement():
             indexnum+=1
             pass
         else:
-            print("statement 3syntax error")
+            print("Syntax Error")
             exit()
 
     else:
-        print("statmentsyntax4 error")
+        print("Syntax Error")
         exit()
 
 def identifier():
@@ -198,7 +197,7 @@ def identifier():
     if(next_token[indexnum]==1):
         pass
     else:
-        print("identi syntax error")
+        print("Syntax Error")
         exit()
     indexnum+=1
 
@@ -215,8 +214,9 @@ def function_order(): #함수 call하는 순서
             call_index=token_string.index('call',caller_index,right_paren_index) #callee의 index
             return_num=token_string[caller_index:call_index].count(';')
             #return address찾기위해서 함수 선언부터 call전까지의 ;로 문장의 개수 세기
-            if('variable' in token_string[caller_index:call_index]):
-                return_num-=1 #앞에서 센 문장개수에서 변수 선언문의 개수는 빼준다.
+            if(token_string[caller_index:call_index].count('variable')>0):
+                return_num-= token_string[caller_index:call_index].count('variable')
+                #앞에서 센 문장개수에서 변수 선언문의 개수는 빼준다.
             return_addr.append(funcname) #retrun할 함수의 이름 저장
             return_addr.append(return_num+1) #func(caller)의 이름 위치와 '}'의 위치 사이에서 call 하는 거 위치 찾기 그럼 그거 +1한게 함수 이름 위치
             funcname=token_string[call_index+1] #caller에서 call한 함수의 이름(callee 이름)
@@ -224,7 +224,7 @@ def function_order(): #함수 call하는 순서
             f_stack[funcname].insert(0,return_addr)#f_stack에 return address의 값을 리스트로 넣어준다.
         except:
             break
-    for i in range(len(call_order)):
+    for i in range(len(call_order)):#동적링크 처리하는 부분
         if(i==0):
             pass
         else:
