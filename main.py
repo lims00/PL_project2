@@ -76,9 +76,6 @@ def lexical(inputs):
         elif (symbol=="T0"):
             print("error")
 
-indexnum=0
-f_stack={}
-value_list=[]
 
 def start():
     global indexnum
@@ -106,7 +103,7 @@ def function():
         else:
             value_list=[0]
         function_body()
-        f_stack[funcname]=value_list
+        f_stack[funcname]=value_list #함수 이름 key로 하고 value로 ARI저장
     else:
         print("function1 syntax error")
         exit()
@@ -117,8 +114,7 @@ def function():
     else:
         print("function2 syntax error")
         exit()
-        print(next_token[indexnum])
-        print(token_string[indexnum])
+
 
 
 def function_body():
@@ -154,7 +150,7 @@ def var_definition():
 def var_list():
     global indexnum,var_list
     identifier()
-    value_list.append(token_string[indexnum-1])
+    value_list.append(token_string[indexnum-1]) # 함수선언하는 곳 이름과 index값으로 저장
     if(next_token[indexnum]==4):
         indexnum+=1
         var_list()
@@ -206,8 +202,8 @@ def identifier():
         exit()
     indexnum+=1
 
-def function_order():
-    funcname="main"
+def function_order(): #함수 call하는 순서
+    funcname="main" #처음 시작은 main이니까 caller의 함수를 main으로 한다.
     call_index=0
     return_num=0
     call_order.append('main')
@@ -218,13 +214,14 @@ def function_order():
             right_paren_index=token_string.index('}',caller_index) #func(caller)의 '}' 위치
             call_index=token_string.index('call',caller_index,right_paren_index) #callee의 index
             return_num=token_string[caller_index:call_index].count(';')
+            #return address찾기위해서 함수 선언부터 call전까지의 ;로 문장의 개수 세기
             if('variable' in token_string[caller_index:call_index]):
-                return_num-=1
-            return_addr.append(funcname)
+                return_num-=1 #앞에서 센 문장개수에서 변수 선언문의 개수는 빼준다.
+            return_addr.append(funcname) #retrun할 함수의 이름 저장
             return_addr.append(return_num+1) #func(caller)의 이름 위치와 '}'의 위치 사이에서 call 하는 거 위치 찾기 그럼 그거 +1한게 함수 이름 위치
             funcname=token_string[call_index+1] #caller에서 call한 함수의 이름(callee 이름)
             call_order.append(funcname) #callee 저장
-            f_stack[funcname].insert(0,return_addr)
+            f_stack[funcname].insert(0,return_addr)#f_stack에 return address의 값을 리스트로 넣어준다.
         except:
             break
     for i in range(len(call_order)):
@@ -247,6 +244,7 @@ def execute():
         func=call_order[len(call_order)-1-k]
         while(next_token[i]!=3):
             if(next_token[i]==5 or next_token[i]==2):
+                #변수;를 찾기 위함.그러나 함수 시작부분에 위치할 수 있음을 고려해 ' ; 변수 ; ' 또는 ' { 변수 ; ' 의 패턴을 갖는 것을 찾는다.
                 if(next_token[i+1]==1):
                     if(next_token[i+2]==5):
                         count = 0
@@ -294,15 +292,16 @@ def execute():
             else:
                 i+=1
 
-
-
-
-f_index={}
-return_addr=[]
-call_order=[]
-next_token = []
-token_string = []
 input_string=""
+next_token = [] #token 저장
+token_string = []
+indexnum=0 #리스트내 현재 위치
+f_stack={} #ARI를 저장할 정보
+value_list=[] #각 함수의 variable 선언시 변수들을 일시적으로 저장하는 곳
+f_index={} #함수 선언 index위치
+return_addr=[] #return할 addr를 일시적으로 저장하는 곳
+call_order=[] #함수를 실행하는 순서
+
 def main():
     global input_string
     #inputfile = sys.argv[1]
@@ -312,15 +311,10 @@ def main():
     f.close()
     for line in data:
         input_string=input_string+line.strip()+' '
-    lexical(input_string)
-    start()
-
-    function_order()
-
-    execute()
-
-
-
+    lexical(input_string)#lexcal
+    start()  #구문 분석
+    function_order() #함수 call되는 순서 파악
+    execute() #실행부분
 
 if __name__=="__main__":
     main()
