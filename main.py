@@ -79,6 +79,16 @@ def lexical(inputs):
 def start():
     global indexnum
     functions()
+    for i in all_list:
+        if (all_list.count(i)>=2):
+            all_list.remove(i)
+    for k in list(f_stack.keys()):
+        all_list.append(k)
+
+    for j in all_list:
+        if (all_list.count(j)>=2):
+            print("Duplicate declaration of the identifier or the function name:%s/%s()"%(j,j))
+            exit()
     print('Syntax O.K.')
 
 def functions():
@@ -87,13 +97,17 @@ def functions():
     if(indexnum<len(next_token) and next_token[indexnum]==1):
         functions()
 
-
+all_list=[]
 
 def function():
     global indexnum,value_list
     identifier()
     funcname=token_string[indexnum-1]
     f_index[funcname]=indexnum-1
+
+    if funcname in f_stack.keys():
+        print("Duplicate declaration of the function name: %s"%funcname)
+        exit()
     if(next_token[indexnum]==2):
         indexnum+=1
 
@@ -102,6 +116,10 @@ def function():
         else:
             value_list=[0]
         function_body()
+        for i in value_list:
+            if(i!=0 and value_list.count(i)==2):
+                value_list.remove(i)
+                print("Duplicate declaration of the identifier:%s"%i)
         f_stack[funcname]=value_list #함수 이름 key로 하고 value로 ARI저장
     else:
         print("Syntax Error")
@@ -147,9 +165,11 @@ def var_definition():
 
 
 def var_list():
-    global indexnum,var_list
+    global indexnum
     identifier()
-    value_list.append(token_string[indexnum-1]) # 함수선언하는 곳 이름과 index값으로 저장
+    value_list.append(token_string[indexnum-1])
+    all_list.append(token_string[indexnum-1])
+
     if(next_token[indexnum]==4):
         indexnum+=1
         var_list()
@@ -202,7 +222,12 @@ def identifier():
     indexnum+=1
 
 def function_order(): #함수 call하는 순서
+    global flag
     funcname="main" #처음 시작은 main이니까 caller의 함수를 main으로 한다.
+    if "main" not in f_stack.keys():
+        print("No starting function.")
+        exit()
+
     call_index=0
     return_num=0
     call_order.append('main')
@@ -220,6 +245,12 @@ def function_order(): #함수 call하는 순서
             return_addr.append(funcname) #retrun할 함수의 이름 저장
             return_addr.append(return_num+1) #func(caller)의 이름 위치와 '}'의 위치 사이에서 call 하는 거 위치 찾기 그럼 그거 +1한게 함수 이름 위치
             funcname=token_string[call_index+1] #caller에서 call한 함수의 이름(callee 이름)
+            flag=0
+            if funcname not in f_stack.keys():
+                print("\nCall to undefined function: %s"%funcname)
+                flag=1
+                sys.exit()
+
             call_order.append(funcname) #callee 저장
             f_stack[funcname].insert(0,return_addr)#f_stack에 return address의 값을 리스트로 넣어준다.
         except:
@@ -303,10 +334,10 @@ return_addr=[] #return할 addr를 일시적으로 저장하는 곳
 call_order=[] #함수를 실행하는 순서
 
 def main():
-    global input_string
-    inputfile = sys.argv[1]
-    f = open(inputfile,'r')
-    #f = open('hello.txt', 'r')
+    global input_string,flag
+    #inputfile = sys.argv[1]
+    #f = open(inputfile,'r')
+    f = open('hello.txt', 'r')
     data = f.readlines()
     f.close()
     for line in data:
@@ -314,7 +345,9 @@ def main():
     lexical(input_string)#lexcal
     start()  #구문 분석
     function_order() #함수 call되는 순서 파악
-    execute() #실행부분
+    if(flag==0):
+        execute() #실행부분
+
 
 if __name__=="__main__":
     main()

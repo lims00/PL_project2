@@ -1,5 +1,5 @@
 first {
-variable a, b, c;
+variable a,second, c;
 call second;
 p;
 }
